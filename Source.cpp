@@ -11,9 +11,13 @@ LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 void AddMenus(HWND);
 void AddControls(HWND);
 void loadImages();
+void registerDialogClass(HINSTANCE);
+void displayDialog(HWND);
+
+
 
 HMENU hMenu;
-HWND hName, hAge, hOut, hLogo;
+HWND hName, hAge, hOut, hLogo, hMainWindow;
 HBITMAP hLogoImage, hGenerateImage;
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdshow)
@@ -29,7 +33,9 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 	if (!RegisterClassW(&wc))
 		return -1;
 
-	CreateWindowW(L"myWindowClass", L"My Window", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 500, NULL, NULL, NULL, NULL);
+	registerDialogClass(hInst);
+
+	hMainWindow = CreateWindowW(L"myWindowClass", L"My Window", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 500, NULL, NULL, NULL, NULL);
 
 	//MessageBoxW(NULL, L"HELLO", L"HI", MB_OK);
 
@@ -61,6 +67,7 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 			}
 			break;
 		case FILE_MENU_NEW:
+			displayDialog(hWnd);
 			MessageBeep(MB_ICONINFORMATION);
 			break;
 		case GENERATE_BUTTON:
@@ -148,4 +155,48 @@ void loadImages()
 {
 	hLogoImage = (HBITMAP)LoadImageW(NULL, L"Logo.bmp", IMAGE_BITMAP, 100, 100, LR_LOADFROMFILE);
 	hGenerateImage = (HBITMAP)LoadImageW(NULL, L"Logo.bmp", IMAGE_BITMAP, 98, 38, LR_LOADFROMFILE);
+}
+
+LRESULT CALLBACK DialogProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+	switch (msg)
+	{
+	case WM_COMMAND:
+		switch (wp)
+		{
+		case 1:
+			EnableWindow(hMainWindow, true);
+			DestroyWindow(hWnd);
+			break;
+		}
+	case WM_CLOSE:
+		EnableWindow(hMainWindow, true);
+		DestroyWindow(hWnd);
+		break;
+	default:
+		return DefWindowProcW(hWnd, msg, wp, lp);
+	}
+}
+
+void registerDialogClass(HINSTANCE hInst)
+{
+	WNDCLASSW dialog = { 0 };
+
+	dialog.hbrBackground = (HBRUSH)COLOR_WINDOW;
+	dialog.hCursor = LoadCursor(NULL, IDC_CROSS);
+	dialog.hInstance = hInst;
+	dialog.lpszClassName = L"myDialogClass";
+	dialog.lpfnWndProc = DialogProcedure;
+
+	RegisterClassW(&dialog);
+}
+
+void displayDialog(HWND hWnd)
+{
+	HWND hDlg = CreateWindowW(L"myDialogClass", L"Dialog", WS_VISIBLE | WS_OVERLAPPEDWINDOW, 400, 400,
+		200, 200, hWnd, NULL, NULL, NULL);
+	CreateWindowW(L"Button", L"Close", WS_VISIBLE | WS_CHILD, 20, 20, 100, 40,
+		hDlg, (HMENU)1, NULL, NULL);
+
+	EnableWindow(hWnd, false);
 }
