@@ -8,6 +8,8 @@
 #define FILE_MENU_EXIT 3
 #define GENERATE_BUTTON 4 
 #define OPEN_FILE_BUTTON 5
+#define SAVE_FILE_BUTTON 6
+
 
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
@@ -16,7 +18,7 @@ void AddControls(HWND);
 void displayDialog(HWND);
 
 HMENU hMenu;
-HWND hName, hAge, hOut, hMainWindow, hOpenFile, hEdit;
+HWND hName, hSaveFile, hAge, hOut, hMainWindow, hOpenFile, hEdit;
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdshow)
 {
@@ -48,15 +50,17 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 void display_file(char* path)
 {
 	FILE  *file;
-	file = fopen(path, "rb");
+	file = fopen(path, "r");
 	fseek(file, 0, SEEK_END);
 	int _size = ftell(file);
 	rewind(file);
-	char *data = new char(_size + 1);
+	char *data = new char[_size + 1];
 	fread(data, _size, 1, file);
 	data[_size] = '\0';
 
 	SetWindowText(hEdit, (LPCWSTR)data);
+
+	fclose(file);
 }
 
 void open_file(HWND hWnd)
@@ -79,6 +83,43 @@ void open_file(HWND hWnd)
 	display_file(ofn.lpstrFile);
 }
 
+void write_file(char* path)
+{
+	FILE *file;
+	file = fopen(path, "w");
+	
+	int _size = GetWindowTextLengthA(hEdit);
+	char *data = new char[_size + 1];
+	GetWindowTextA(hEdit, data, _size+1);
+
+	fwrite(data, _size + 1, 1, file);
+
+	fclose(file);
+}
+
+void save_file(HWND hWnd)
+{
+	OPENFILENAMEA ofn;
+
+	char file_name[100];
+
+	ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
+
+	ofn.lStructSize = sizeof(OPENFILENAMEA);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFile = file_name;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = 100;
+	ofn.lpstrFilter = "All file\0*.*\0Source File\0*.CPP\0Text Files\0*.TXT\0";
+	ofn.nFilterIndex = 1;
+
+	GetSaveFileNameA(&ofn);
+
+	write_file((char*)ofn.lpstrFile);
+
+	//display_file(ofn.lpstrFile);
+}
+
 LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
 	int val;
@@ -89,6 +130,9 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 		{
 		case OPEN_FILE_BUTTON:
 			open_file(hWnd);
+			break;
+		case SAVE_FILE_BUTTON:
+			save_file(hWnd);
 			break;
 		}
 		break;
@@ -126,6 +170,7 @@ void AddMenus(HWND hWnd)
 void AddControls(HWND hWnd)
 {
 	hOpenFile = CreateWindowW(L"Button", L"Open File", WS_VISIBLE | WS_CHILD |WS_BORDER, 0, 0, 98, 38, hWnd, (HMENU)OPEN_FILE_BUTTON, NULL, NULL);
-	hEdit = CreateWindowW(L"Edit", L" ", WS_VISIBLE | WS_CHILD |ES_MULTILINE |ES_AUTOHSCROLL| ES_AUTOVSCROLL, 0, 40, 450, 390, hWnd, NULL, NULL, NULL);
+	hSaveFile = CreateWindowW(L"Button", L"Save File", WS_VISIBLE | WS_CHILD | WS_BORDER, 170, 0, 98, 38, hWnd, (HMENU)SAVE_FILE_BUTTON, NULL, NULL);
+	hEdit = CreateWindowW(L"Edit", L" ", WS_VISIBLE | WS_CHILD |ES_MULTILINE | WS_VSCROLL| WS_HSCROLL, 0, 40, 450, 390, hWnd, NULL, NULL, NULL);
 }
 
