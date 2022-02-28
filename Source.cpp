@@ -31,6 +31,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 
 	CreateWindowW(L"myWindowClass", L"My Window", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 500, NULL, NULL, NULL, NULL);
 
+	//MessageBoxW(NULL, L"HELLO", L"HI", MB_OK);
+
 	MSG msg = { 0 };
 
 	while (GetMessage(&msg, NULL, NULL, NULL))
@@ -44,6 +46,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR args, int ncmdsho
 
 LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
+	int val;
 	switch (msg)
 	{
 	case WM_COMMAND:
@@ -51,7 +54,11 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 		switch (wp)
 		{
 		case FILE_MENU_EXIT:
-			DestroyWindow(hWnd);
+			val = MessageBoxW(hWnd, L"Are you sure?", L"Wait!", MB_YESNO | MB_ICONEXCLAMATION);
+			if (val == IDYES)
+			{
+				DestroyWindow(hWnd);
+			}
 			break;
 		case FILE_MENU_NEW:
 			MessageBeep(MB_ICONINFORMATION);
@@ -61,6 +68,21 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 			GetWindowTextA(hName, name, 30);
 			GetWindowTextA(hAge, age, 10);
 			
+			if ((strcmp(name," ") == 0) || (strcmp(age," ") == 0))
+			{
+				val = MessageBoxW(hWnd, L"You did not enter anything!", NULL, MB_ABORTRETRYIGNORE);
+				switch (val)
+				{
+					case IDABORT:
+						DestroyWindow(hWnd);
+						break;
+					case IDRETRY:
+						return 0;
+					case IDIGNORE:
+						break;
+				}
+			}
+
 			strcpy_s(out, name);
 			strcat_s(out, " is ");
 			strcat_s(out, age);
